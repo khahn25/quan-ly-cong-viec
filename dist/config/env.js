@@ -1,0 +1,2 @@
+export const JWT_SECRET = process.env.JWT_SECRET || "default_secret"; // default cho dev
+//# sourceMappingURL=env.js.map
