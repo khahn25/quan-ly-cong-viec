@@ -1,6 +1,7 @@
 import type { Request, Response } from "express";
+import { AuthRequest } from "../middleware/authMiddleware.js";
 declare class ProjectController {
-    create(req: Request, res: Response): Promise<void>;
+    create(req: AuthRequest, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
     getAll(req: Request, res: Response): Promise<void>;
     getById(req: Request, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
     update(req: Request, res: Response): Promise<Response<any, Record<string, any>> | undefined>;

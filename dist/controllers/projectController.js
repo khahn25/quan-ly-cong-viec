@@ -2,7 +2,11 @@ import projectService from "../services/projectService.js";
 class ProjectController {
     async create(req, res) {
         try {
-            const project = await projectService.create(req.body);
+            if (!req.user) {
+                return res.status(401).json({ message: "Not authorized" });
+            }
+            // chắc chắn user tồn tại, dùng non-null assertion
+            const project = await projectService.create(req.body, req.user.id);
             res.status(201).json(project);
         }
         catch (err) {

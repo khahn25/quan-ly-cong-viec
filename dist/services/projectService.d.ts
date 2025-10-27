@@ -1,10 +1,32 @@
-import { IProject } from "../models/Project.js";
 declare class ProjectService {
-    create(data: Partial<IProject>): Promise<IProject>;
-    getAll(): Promise<IProject[]>;
-    getById(id: string): Promise<IProject | null>;
-    update(id: string, data: Partial<IProject>): Promise<IProject | null>;
-    delete(id: string): Promise<IProject | null>;
+    create(data: {
+        name: string;
+        description?: string;
+    }, ownerId: string): Promise<import("mongoose").Document<unknown, {}, import("../models/Project.js").IProject, {}, {}> & import("../models/Project.js").IProject & Required<{
+        _id: unknown;
+    }> & {
+        __v: number;
+    }>;
+    getAll(): Promise<(import("mongoose").Document<unknown, {}, import("../models/Project.js").IProject, {}, {}> & import("../models/Project.js").IProject & Required<{
+        _id: unknown;
+    }> & {
+        __v: number;
+    })[]>;
+    getById(id: string): Promise<(import("mongoose").Document<unknown, {}, import("../models/Project.js").IProject, {}, {}> & import("../models/Project.js").IProject & Required<{
+        _id: unknown;
+    }> & {
+        __v: number;
+    }) | null>;
+    update(id: string, data: any): Promise<(import("mongoose").Document<unknown, {}, import("../models/Project.js").IProject, {}, {}> & import("../models/Project.js").IProject & Required<{
+        _id: unknown;
+    }> & {
+        __v: number;
+    }) | null>;
+    delete(id: string): Promise<(import("mongoose").Document<unknown, {}, import("../models/Project.js").IProject, {}, {}> & import("../models/Project.js").IProject & Required<{
+        _id: unknown;
+    }> & {
+        __v: number;
+    }) | null>;
 }
 declare const _default: ProjectService;
 export default _default;

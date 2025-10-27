@@ -1,20 +1,29 @@
+// src/services/projectService.ts
 import Project from "../models/Project.js";
 class ProjectService {
-    async create(data) {
-        const project = new Project(data);
+    async create(data, ownerId) {
+        const project = new Project({
+            ...data,
+            owner: ownerId, // gán trực tiếp string ObjectId
+            members: [ownerId], // owner auto thành member
+        });
         return await project.save();
     }
     async getAll() {
-        return await Project.find().populate("owner members", "name email");
+        return Project.find()
+            .populate("owner", "name email")
+            .populate("members", "name email");
     }
     async getById(id) {
-        return await Project.findById(id).populate("owner members", "name email");
+        return Project.findById(id)
+            .populate("owner", "name email")
+            .populate("members", "name email");
     }
     async update(id, data) {
-        return await Project.findByIdAndUpdate(id, data, { new: true }).populate("owner members", "name email");
+        return Project.findByIdAndUpdate(id, data, { new: true });
     }
     async delete(id) {
-        return await Project.findByIdAndDelete(id);
+        return Project.findByIdAndDelete(id);
     }
 }
 export default new ProjectService();

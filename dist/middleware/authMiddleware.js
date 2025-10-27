@@ -1,8 +1,8 @@
 import jwt from "jsonwebtoken";
-export const protect = (req, res, next) => {
+import User from "../models/User.js";
+export const protect = async (req, res, next) => {
     const authHeader = req.headers.authorization;
-    // 1. Kiểm tra token tồn tại
-    if (!authHeader || !authHeader.startsWith("Bearer")) {
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
         return res.status(401).json({ message: "Not authorized, no token" });
     }
     const token = authHeader.split(" ")[1];
@@ -15,19 +15,16 @@ export const protect = (req, res, next) => {
         return res.status(500).json({ message: "Server configuration error" });
     }
     try {
-        // 2. Ép sang unknown trước
+        // decode token -> lấy user id
         const decoded = jwt.verify(token, secret);
-        // 3. Kiểm tra runtime payload
-        if (typeof decoded === "object" &&
-            decoded !== null &&
-            "id" in decoded &&
-            "email" in decoded) {
-            req.user = { id: decoded.id, email: decoded.email };
-            return next();
+        // check user trong DB
+        const user = await User.findById(decoded.id).select("_id email");
+        if (!user) {
+            return res.status(401).json({ message: "Not authorized, user not found" });
         }
-        else {
-            return res.status(401).json({ message: "Not authorized, invalid token" });
-        }
+        // gán vào req.user để controller dùng
+        req.user = { id: user._id.toString(), email: user.email };
+        next();
     }
     catch (err) {
         return res.status(401).json({ message: "Not authorized, invalid token" });
