@@ -1,17 +1,16 @@
-// src/routers/commentRouter.ts
 import express from "express";
-import { postComment, getComments, removeComment } from "../controllers/commentController.js";
+import { postCommentBody, getComments, removeComment } from "../controllers/commentController.js";
 import { protect } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-// Tạo comment
-router.post("/", protect, postComment);
+// POST comment bằng body
+router.post("/", protect, postCommentBody);
 
-// Lấy comment theo task
-router.get("/:taskId", protect, getComments);
+// GET comment theo query ?taskId=
+router.get("/", protect, getComments);
 
-// Xóa comment
+// DELETE comment
 router.delete("/:id", protect, removeComment);
 
 export default router;

@@ -1,127 +1,58 @@
-// src/controllers/commentController.ts
-import type { Request, Response } from "express";
-import * as commentService from "../services/commentService.js";
-import * as notificationService from "../services/notificationService.js";
+import { Response } from "express";
+import { AuthRequest } from "../types/express.js";
+import commentService from "../services/commentService.js";
 import Task from "../models/Task.js";
 
-/**
- * Định nghĩa kiểu Request có user từ middleware xác thực
- */
-interface AuthRequest extends Request {
-  user?: { id: string; email: string; role?: string };
-}
-
-/**
- * @route   POST /api/comments
- * @desc    Tạo bình luận mới cho task
- * @access  Private
- */
-export const postComment = async (req: AuthRequest, res: Response) => {
+// POST comment với body JSON
+export const postCommentBody = async (req: AuthRequest, res: Response) => {
   try {
     const { taskId, content } = req.body;
-    const user = req.user;
+    const userId = req.user?.id;
 
-    // Kiểm tra đầu vào
-    if (!taskId || !content || !user) {
-      return res.status(400).json({
-        message: "Thiếu taskId hoặc content hoặc user",
-      });
+    if (!taskId || !content || !userId) {
+      return res.status(400).json({ message: "Thiếu taskId, content hoặc user" });
     }
 
-    // Tạo bình luận
-    const comment = await commentService.createComment(taskId, user.id, content);
+    const task = await Task.findById(taskId);
+    if (!task) return res.status(404).json({ message: "Task không tồn tại" });
 
-    // Sau khi tạo comment, gửi thông báo cho người được giao task (nếu khác user đang comment)
-    try {
-      const task = await Task.findById(taskId).populate("assignedTo", "_id email name");
-      const assignedToId = task?.assignedTo?._id?.toString();
-
-      if (assignedToId && assignedToId !== user.id) {
-        await notificationService.createNotification(
-          assignedToId,
-          "Bình luận mới trên Task",
-          `${user.email || "Một người dùng"} đã bình luận: "${content}"`,
-          taskId
-        );
-      }
-    } catch (notifyErr) {
-      console.error("Lỗi khi tạo notification:", notifyErr);
-    }
-
-    // Populate user để trả về thông tin người bình luận
-    const populatedComment = await comment.populate("user", "name email");
-
-    res.status(201).json(populatedComment);
+    const comment = await commentService.createComment(taskId, userId, content);
+    res.status(201).json(comment);
   } catch (err: any) {
-    console.error("❌ Lỗi khi tạo comment:", err);
-    res.status(500).json({
-      message: "Lỗi khi tạo comment",
-      error: err.message,
-    });
+    console.error("❌ Lỗi thêm comment:", err);
+    res.status(500).json({ message: "Lỗi server" });
   }
 };
 
-/**
- * @route   GET /api/comments/:taskId
- * @desc    Lấy danh sách comment theo task
- * @access  Private
- */
+// GET comments theo taskId query param
 export const getComments = async (req: AuthRequest, res: Response) => {
   try {
-    const { taskId } = req.params;
-
-    if (!taskId) {
-      return res.status(400).json({ message: "Thiếu taskId" });
-    }
+    const taskId = req.query.taskId as string;
+    if (!taskId) return res.status(400).json({ message: "taskId is required" });
 
     const comments = await commentService.getCommentsByTask(taskId);
-    res.json({
-      count: comments.length,
-      results: comments,
-    });
+    res.json(comments);
   } catch (err: any) {
-    console.error("❌ Lỗi khi lấy comment:", err);
-    res.status(500).json({
-      message: "Lỗi khi lấy comment",
-      error: err.message,
-    });
+    console.error("❌ Lỗi lấy comment:", err);
+    res.status(500).json({ message: "Lỗi server" });
   }
 };
 
-/**
- * @route   DELETE /api/comments/:id
- * @desc    Xóa comment (chỉ chính chủ hoặc admin)
- * @access  Private
- */
+// DELETE comment
 export const removeComment = async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
-    const user = req.user;
+    const userId = req.user?.id;
+    const isAdmin = req.user?.isAdmin || false;
 
-    if (!id || !user) {
-      return res.status(400).json({ message: "Thiếu dữ liệu" });
-    }
+    if (!id || !userId) return res.status(400).json({ message: "Missing id or user" });
 
-    const deleted = await commentService.deleteComment(id, {
-      userId: user.id,
-      isAdmin: user.role === "admin",
-    });
+    const deleted = await commentService.deleteComment(id, { userId, isAdmin });
+    if (!deleted) return res.status(403).json({ message: "Không có quyền xóa comment hoặc comment không tồn tại" });
 
-    if (!deleted) {
-      return res.status(404).json({
-        message: "Không tìm thấy hoặc không có quyền xóa comment này",
-      });
-    }
-
-    res.json({
-      message: "Comment đã được xóa thành công",
-      deleted,
-    });
+    res.json({ message: "Comment đã xóa" });
   } catch (err: any) {
-    console.error("❌ Lỗi khi xóa comment:", err);
-    res.status(500).json({
-      message: "Lỗi khi xóa comment",
-      error: err.message,
-    });
+    console.error("❌ Lỗi xóa comment:", err);
+    res.status(500).json({ message: "Lỗi server" });
   }
 };

@@ -18,25 +18,18 @@ const taskSchema = new Schema<ITask>(
     project: { type: Schema.Types.ObjectId, ref: "Project", required: true },
     assignedTo: { type: Schema.Types.ObjectId, ref: "User" },
     deadline: { type: Date },
-    priority: { 
-      type: String, 
-      enum: ["low", "medium", "high"], 
-      default: "medium" ,
-    },
-    status: { 
-      type: String, 
-      enum: ["pending", "in-progress", "completed"],
-       default: "pending" },
+    priority: { type: String, enum: ["low", "medium", "high"], default: "medium" },
+    status: { type: String, enum: ["pending", "in-progress", "completed"], default: "pending" },
     attachments: [
       {
-        filename: { type: String, required: true },
+        fileName: { type: String, required: true },
         url: { type: String, required: true },
         mimetype: { type: String, required: true },
-      }
-    ]
+      },
+    ],
   },
   { timestamps: true }
 );
 
 const Task = mongoose.model<ITask>("Task", taskSchema);
-export default Task;   // 
+export default Task;

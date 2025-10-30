@@ -1,22 +1,20 @@
+// src/middleware/uploadMiddleware.ts
 import multer from "multer";
 import path from "path";
 import fs from "fs";
 
-// Tạo thư mục uploads nếu chưa có
-const uploadDir = "uploads";
+const uploadDir = path.join(process.cwd(), "src/uploads"); // nếu đang chạy code TS
+// hoặc nếu bạn chạy bản build JS (dist):
+// const uploadDir = path.join(process.cwd(), "dist/uploads");
+
 if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir);
+  fs.mkdirSync(uploadDir, { recursive: true });
 }
 
-// Lưu file vào thư mục local
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, uploadDir);
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    cb(null, uniqueSuffix + path.extname(file.originalname));
-  }
+  destination: (_, __, cb) => cb(null, uploadDir),
+  filename: (_, file, cb) =>
+    cb(null, Date.now() + "-" + file.originalname.replace(/\s+/g, "_")),
 });
 
 export const upload = multer({ storage });

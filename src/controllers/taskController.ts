@@ -55,37 +55,30 @@ class TaskController {
   }
 
    async uploadFiles(req: Request, res: Response) {
-  try {
-    const taskId = req.params.id;
+    try {
+      const taskId = req.params.id;
 
-    if (!taskId) {
-      return res.status(400).json({ message: "Task ID is required" });
+      if (!taskId) return res.status(400).json({ message: "Task ID is required" });
+
+      const files = req.files as Express.Multer.File[];
+      if (!files || files.length === 0)
+        return res.status(400).json({ message: "No files uploaded" });
+
+      const attachments = files.map(file => ({
+        fileName: file.originalname,
+        url: `/uploads/${file.filename}`,
+        mimetype: file.mimetype,
+      }));
+
+      const updatedTask = await taskService.addFiles(taskId, attachments);
+      if (!updatedTask) return res.status(404).json({ message: "Task not found" });
+
+      res.json({ message: "Files uploaded successfully", task: updatedTask });
+    } catch (err: any) {
+      console.error(err);
+      res.status(500).json({ message: err.message });
     }
-
-    const files = req.files as Express.Multer.File[];
-    if (!files || files.length === 0) {
-      return res.status(400).json({ message: "No files uploaded" });
-    }
-
-    // Map các file thành định dạng attachments
-    const attachments = files.map(file => ({
-      fileName: file.originalname,
-      url: `/uploads/${file.filename}`,
-      mimetype: file.mimetype,
-    }));
-
-    const updatedTask = await taskService.addFiles(taskId, attachments);
-
-    if (!updatedTask) {
-      return res.status(404).json({ message: "Task not found" });
-    }
-
-    res.json({ message: "Files uploaded successfully", task: updatedTask });
-  } catch (err: any) {
-    console.error(err);
-    res.status(500).json({ message: err.message });
   }
-}
 
 }
 
